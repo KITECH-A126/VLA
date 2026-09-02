@@ -484,7 +484,7 @@ GitHub 정본은 `KITECH-A126/VLA` 저장소의 `smolvla-simulation-dataset` 브
 
 | 경로 | 내용 | 담당 |
 |---|---|---|
-| `README.md` | 환경, 데이터 이력·스키마, 코드 관계, 전체 생성 명령, 파라미터, 무광 재질 발견 경위, 미결 항목 | 김수경 |
+| `README.md` | 환경, 데이터 이력·스키마, 코드 관계, 전체 생성 명령, 파라미터, 무광 재질 발견 경위 | 김수경 |
 | `scripts/make_dataset/` | ver.1~7.1 데이터 생성 코드; 파일명과 import 구조를 그대로 유지 | 김수경 |
 | `scripts/inspect_parquet.py` | 생성 데이터의 episode/task metadata 확인 도구 | 김수경 |
 | `assets/openarm_use/` | OpenArm, gripper, camera, table, storage box와 texture USD assets | 김수경 |
@@ -505,38 +505,3 @@ GitHub 정본은 `KITECH-A126/VLA` 저장소의 `smolvla-simulation-dataset` 브
 | 데이터 주의사항 | state/action 8-D 순서와 degree 단위, gripper mapping, atomic-triplet 조건, 무광 재질 적용 여부 |
 
 Notion에 파일을 첨부할 때는 이름만 적지 않고 실제 다운로드가 가능한지 다른 팀원 계정으로 확인한다. 외부 Hugging Face dataset은 repo ID뿐 아니라 클릭 가능한 주소와 private 접근 방법을 함께 기록한다.
-
-### 8.3 최종 제출 체크리스트
-
-- [ ] GitHub 브랜치에서 README와 모든 생성 코드의 링크가 열리는지 확인
-- [ ] ver.7.1 명령을 실행할 때 필요한 여섯 Python 파일과 `assets/openarm_use/`가 모두 존재하는지 확인
-- [ ] Notion에서 ver.5와 ver.7.1 최종 ZIP을 다른 팀원 계정으로 내려받을 수 있는지 확인
-- [ ] Notion 데이터 설명이 README의 episode 수·범위·단위와 일치하는지 확인
-- [ ] 미결 항목에 simulation rendering과 dataset 구성의 분리 검증 필요성을 남김
-
-## 9. 코드 및 데이터셋 내려받기
-
-먼저 코드와 USD assets를 받는다. 저장소의 대용량 USD 때문에 Git LFS가 필요하다.
-
-```bash
-git clone git@github.com:KITECH-A126/VLA.git
-cd VLA
-git switch smolvla-simulation-dataset
-git lfs install
-git lfs pull
-```
-
-데이터셋은 GitHub에 포함되지 않는다. [Notion 데이터셋 모음](https://app.notion.com/p/3cfc15950d5180fe8bd1dfcece693a65?source=copy_link)에서 실험에 필요한 버전을 내려받는다. 최종 재현 대상은 다음 두 파일이다.
-
-```text
-random_cube_tilt_30_gripper_mapped_box_blue_50_degree.zip
-openarm_three_color_triplet_tilt50_matte.zip
-```
-
-Notion 권한이 없는 인계자는 KITECH-A126 저장소 관리자에게 데이터셋 페이지 공유 권한을 요청해야 한다.
-
-## 10. 미결 항목
-
-- glossy/matte, 조명 세기와 camera 노출 효과를 정량적으로 분리하지 못했다.
-- simulation과 실물 결과는 색상 수, 데이터 분포, rendering과 camera domain이 달라 직접 비교할 수 없다.
-- 3색에 필요한 색당 episode 수는 확정하지 못했다. 확보된 두 점은 2색 40ep/색 성공과 3색 20ep/색 실패뿐이며 실험 조건도 다르다.
