@@ -1,0 +1,195 @@
+#usda 1.0
+(
+    defaultPrim = "realsense2_camera"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+# Sensor-ready overlay for d435i.usd.
+#
+# RealSense optical frame: +X right, +Y down, +Z forward.
+# USD camera frame:         +X right, +Y up,   -Z forward.
+# Therefore each UsdGeom.Camera is rotated 180 degrees about its local X axis.
+# The camera positions and inter-sensor extrinsics come from the D435i URDF.
+# Intrinsics below are nominal 640x480 values derived from the D435i datasheet
+# FOV. Replace them with per-device calibration for pixel-accurate matching.
+
+def Xform "realsense2_camera" (
+    prepend references = @../camera/d435i/d435i.usd@
+)
+{
+    custom string realsense:model = "Intel RealSense D435i"
+    custom float realsense:datasheetMassKg = 0.075
+    custom string realsense:streamProfile = "640x480@30"
+
+    # The official ROS Xacro contains a 72 g placeholder and explicitly says
+    # that its mass/inertia are not reliable for modeling. Override total mass
+    # with the D400 datasheet's nominal D435i product weight (75 g). The source
+    # inertia remains nominal/unverified and should be replaced for precision
+    # wrist dynamics.
+    over "camera_link" (
+        prepend apiSchemas = ["PhysicsMassAPI"]
+    )
+    {
+        float physics:mass = 0.075
+    }
+
+    over "camera_color_optical_frame"
+    {
+        def Camera "ColorCamera"
+        {
+            # Hide only the editor camera gizmo. The camera remains available
+            # to render products and Isaac Lab CameraCfg.
+            token visibility = "invisible"
+            custom string realsense:frame = "camera_color_optical_frame"
+            custom string realsense:model = "D435i nominal rectified color 640x480"
+            custom int realsense:width = 640
+            custom int realsense:height = 480
+            custom int realsense:fps = 30
+            custom int realsense:maxFps = 60
+            custom float realsense:fx = 465.6029
+            custom float realsense:fy = 625.2214
+            custom float realsense:cx = 319.5
+            custom float realsense:cy = 239.5
+            custom float realsense:horizontalFovDegrees = 69
+            custom float realsense:verticalFovDegrees = 42
+            custom string realsense:calibration = "datasheet FOV nominal; replace with device calibration for sim-to-real"
+            custom float[] realsense:distortion = [0, 0, 0, 0, 0]
+
+            float2 clippingRange = (0.01, 10)
+            float focalLength = 15.244857
+            float focusDistance = 0.4
+            float fStop = 0
+            float horizontalAperture = 20.955
+            float horizontalApertureOffset = 0
+            token projection = "perspective"
+            float verticalAperture = 11.703905
+            float verticalApertureOffset = 0
+
+            quatd xformOp:orient = (0, 1, 0, 0)
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+        }
+    }
+
+    over "camera_depth_optical_frame"
+    {
+        def Camera "DepthCamera"
+        {
+            # Hide only the editor camera gizmo. The camera remains available
+            # to render products and Isaac Lab CameraCfg.
+            token visibility = "invisible"
+            custom string realsense:frame = "camera_depth_optical_frame"
+            custom string realsense:model = "D435i nominal rectified pseudo depth VGA"
+            custom int realsense:width = 640
+            custom int realsense:height = 480
+            custom int realsense:fps = 30
+            custom int realsense:maxFps = 90
+            custom float realsense:fx = 417.0321
+            custom float realsense:fy = 399.4271
+            custom float realsense:cx = 319.5
+            custom float realsense:cy = 239.5
+            custom float realsense:horizontalFovDegrees = 75
+            custom float realsense:verticalFovDegrees = 62
+            custom float realsense:nominalMinDepthMeters = 0.2
+            custom float realsense:nominalMaxDepthMeters = 3
+            custom float realsense:depthZeroBehindFrontGlassMeters = 0.0042
+            custom string realsense:calibration = "datasheet VGA FOV nominal; replace with device calibration for sim-to-real"
+            custom float realsense:depthScaleMeters = 0.001
+            custom float[] realsense:distortion = [0, 0, 0, 0, 0]
+
+            float2 clippingRange = (0.2, 3)
+            float focalLength = 13.654544
+            float focusDistance = 0.4
+            float fStop = 0
+            float horizontalAperture = 20.955
+            float horizontalApertureOffset = 0
+            token projection = "perspective"
+            float verticalAperture = 16.408955
+            float verticalApertureOffset = 0
+
+            quatd xformOp:orient = (0, 1, 0, 0)
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+        }
+    }
+
+    # Rectified grayscale render cameras at the official left/right OV9282
+    # optical frames. They model the datasheet's nominal 90 x 64 degree wide
+    # imager geometry, but not 850 nm spectral response or projector dots.
+    over "camera_infra1_optical_frame"
+    {
+        def Camera "Infra1Camera"
+        {
+            token visibility = "invisible"
+            custom string realsense:frame = "camera_infra1_optical_frame"
+            custom string realsense:model = "D435i nominal rectified left IR 640x480"
+            custom int realsense:index = 1
+            custom int realsense:width = 640
+            custom int realsense:height = 480
+            custom int realsense:fps = 30
+            custom int realsense:maxFps = 90
+            custom float realsense:fx = 320
+            custom float realsense:fy = 384.0803
+            custom float realsense:cx = 319.5
+            custom float realsense:cy = 239.5
+            custom float realsense:horizontalFovDegrees = 90
+            custom float realsense:verticalFovDegrees = 64
+            custom string realsense:calibration = "D430 wide imager datasheet FOV nominal; replace with device calibration for sim-to-real"
+            custom bool realsense:spectralInfraredModeled = false
+            custom float[] realsense:distortion = [0, 0, 0, 0, 0]
+
+            float2 clippingRange = (0.01, 10)
+            float focalLength = 10.4775
+            float focusDistance = 0.4
+            float fStop = 0
+            float horizontalAperture = 20.955
+            float horizontalApertureOffset = 0
+            token projection = "perspective"
+            float verticalAperture = 13.094137
+            float verticalApertureOffset = 0
+
+            quatd xformOp:orient = (0, 1, 0, 0)
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+        }
+    }
+
+    over "camera_infra2_optical_frame"
+    {
+        def Camera "Infra2Camera"
+        {
+            token visibility = "invisible"
+            custom string realsense:frame = "camera_infra2_optical_frame"
+            custom string realsense:model = "D435i nominal rectified right IR 640x480"
+            custom int realsense:index = 2
+            custom int realsense:width = 640
+            custom int realsense:height = 480
+            custom int realsense:fps = 30
+            custom int realsense:maxFps = 90
+            custom float realsense:fx = 320
+            custom float realsense:fy = 384.0803
+            custom float realsense:cx = 319.5
+            custom float realsense:cy = 239.5
+            custom float realsense:horizontalFovDegrees = 90
+            custom float realsense:verticalFovDegrees = 64
+            custom string realsense:calibration = "D430 wide imager datasheet FOV nominal; replace with device calibration for sim-to-real"
+            custom bool realsense:spectralInfraredModeled = false
+            custom float[] realsense:distortion = [0, 0, 0, 0, 0]
+
+            float2 clippingRange = (0.01, 10)
+            float focalLength = 10.4775
+            float focusDistance = 0.4
+            float fStop = 0
+            float horizontalAperture = 20.955
+            float horizontalApertureOffset = 0
+            token projection = "perspective"
+            float verticalAperture = 13.094137
+            float verticalApertureOffset = 0
+
+            quatd xformOp:orient = (0, 1, 0, 0)
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+        }
+    }
+}

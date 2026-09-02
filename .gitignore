@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+outputs/
+checkpoints/
+wandb/
+*_triplet_staging/
+*.log
+*.tmp
+*.swp
+.~lock.*#

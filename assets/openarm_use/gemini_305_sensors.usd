@@ -1,0 +1,225 @@
+#usda 1.0
+(
+    defaultPrim = "gemini_305"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+# Sensor-ready overlay for the official Orbbec Gemini 305 URDF asset.
+# The underlying geometry and 18 mm stereo baseline come from Orbbec's
+# OrbbecSDK_ROS2/orbbec_description package.
+#
+# ROS optical frame: +X right, +Y down, +Z forward.
+# USD camera frame:   +X right, +Y up,   -Z forward.
+# The camera child rotation is therefore 180 degrees about local X.
+
+def Xform "gemini_305" (
+    prepend references = @../camera/orbbec_gemini_305/gemini_305.usd@
+)
+{
+    over "camera_left_color_optical_frame"
+    {
+        def Camera "LeftColorCamera"
+        {
+            # Hide the editor camera/frustum gizmo without disabling capture.
+            token visibility = "invisible"
+            custom string orbbec:frame = "camera_left_color_optical_frame"
+            custom string orbbec:model = "Gemini 305 nominal 640x480 left color"
+            custom int orbbec:width = 640
+            custom int orbbec:height = 480
+            custom int orbbec:fps = 30
+            custom int orbbec:maxFps = 60
+            custom float orbbec:fx = 368.1179
+            custom float orbbec:fy = 355.8146
+            custom float orbbec:cx = 320
+            custom float orbbec:cy = 240
+            custom float orbbec:horizontalFovDegrees = 82
+            custom float orbbec:verticalFovDegrees = 68
+            custom string orbbec:calibration = "datasheet 4:3 color FOV nominal; replace with device calibration for sim-to-real"
+            custom float[] orbbec:distortion = [0, 0, 0, 0, 0]
+
+            float2 clippingRange = (0.01, 10)
+            float focalLength = 12.052985
+            float focusDistance = 0.4
+            float fStop = 0
+            float horizontalAperture = 20.955
+            float horizontalApertureOffset = 0
+            token projection = "perspective"
+            float verticalAperture = 16.259682
+            float verticalApertureOffset = 0
+
+            quatd xformOp:orient = (0, 1, 0, 0)
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+        }
+
+        # Ground-truth depth renderer placed at the left stereo optical origin.
+        # This is convenient for training data, but it is not a stereo matcher
+        # and therefore does not reproduce physical stereo noise/occlusion.
+        def Camera "PseudoDepthCamera"
+        {
+            token visibility = "invisible"
+            custom string orbbec:frame = "camera_left_color_optical_frame"
+            custom string orbbec:model = "Gemini 305 datasheet-typical 640x480 pseudo depth"
+            custom int orbbec:width = 640
+            custom int orbbec:height = 480
+            custom int orbbec:fps = 30
+            custom int orbbec:maxFps = 60
+            custom float orbbec:fx = 372
+            custom float orbbec:fy = 372
+            custom float orbbec:cx = 320
+            custom float orbbec:cy = 240
+            custom float orbbec:effectiveHorizontalFovDegreesAt20cm = 77
+            custom float orbbec:verticalFovDegrees = 65
+            custom float orbbec:minDepthMeters = 0.04
+            custom float orbbec:maxDepthMeters = 1
+            custom string orbbec:calibration = "Gemini 305 Datasheet V1.0 table 4-7-2 typical intrinsics"
+            custom float orbbec:depthScaleMeters = 0.001
+            custom float[] orbbec:distortion = [0, 0, 0, 0, 0]
+
+            float2 clippingRange = (0.04, 1)
+            float focalLength = 12.180094
+            float focusDistance = 0.4
+            float fStop = 0
+            float horizontalAperture = 20.955
+            float horizontalApertureOffset = 0
+            token projection = "perspective"
+            float verticalAperture = 15.71625
+            float verticalApertureOffset = 0
+
+            quatd xformOp:orient = (0, 1, 0, 0)
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+        }
+
+    }
+
+    # The published Gemini 305 coordinate definition places the Color and
+    # Depth origins at camera_link, coincident with the left RGB sensor.
+    # Keep this logical frame for stable consumer prim paths, but make its pose
+    # exactly identical to the official camera_link/left RGB origin. It does
+    # not represent an additional physical camera module.
+    def Xform "camera_color_frame"
+    {
+        double3 xformOp:translate = (0.008126703388352, 0.008999999999889, 0.0210000000000001)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Xform "camera_color_optical_frame"
+        {
+            # ROS body frame to ROS optical frame: rpy=(-pi/2, 0, -pi/2).
+            quatd xformOp:orient = (0.5, -0.5, 0.5, -0.5)
+            uniform token[] xformOpOrder = ["xformOp:orient"]
+
+            # Normal /camera/color/image_raw equivalent. Official Gemini 301
+            # series stream profile configured here for 640x480 at 30 fps.
+            def Camera "ColorCamera"
+            {
+                token visibility = "invisible"
+                custom string orbbec:stream = "OB_STREAM_COLOR"
+                custom string orbbec:frame = "camera_color_optical_frame"
+                custom string orbbec:model = "Gemini 305 nominal normal color"
+                custom int orbbec:width = 640
+                custom int orbbec:height = 480
+                custom int orbbec:fps = 30
+                custom int orbbec:maxWidth = 1280
+                custom int orbbec:maxHeight = 800
+                custom int orbbec:maxFps = 60
+                custom float orbbec:fx = 368.1179
+                custom float orbbec:fy = 355.8146
+                custom float orbbec:cx = 320
+                custom float orbbec:cy = 240
+                custom float orbbec:horizontalFovDegrees = 82
+                custom float orbbec:verticalFovDegrees = 68
+                custom string orbbec:calibration = "datasheet 4:3 color FOV nominal; replace with device calibration for sim-to-real"
+                custom float[] orbbec:distortion = [0, 0, 0, 0, 0]
+
+                float2 clippingRange = (0.01, 10)
+                float focalLength = 12.052985
+                float focusDistance = 0.4
+                float fStop = 0
+                float horizontalAperture = 20.955
+                float horizontalApertureOffset = 0
+                token projection = "perspective"
+                float verticalAperture = 16.259682
+                float verticalApertureOffset = 0
+
+                quatd xformOp:orient = (0, 1, 0, 0)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+            }
+
+            # D2C ground truth with the same pose and projection as ColorCamera.
+            def Camera "DepthToColorCamera"
+            {
+                token visibility = "invisible"
+                custom string orbbec:frame = "camera_color_optical_frame"
+                custom string orbbec:model = "Gemini 305 nominal D2C ground truth"
+                custom string orbbec:alignmentTarget = "ColorCamera"
+                custom int orbbec:width = 640
+                custom int orbbec:height = 480
+                custom int orbbec:fps = 30
+                custom float orbbec:fx = 368.1179
+                custom float orbbec:fy = 355.8146
+                custom float orbbec:cx = 320
+                custom float orbbec:cy = 240
+                custom float orbbec:horizontalFovDegrees = 82
+                custom float orbbec:verticalFovDegrees = 68
+                custom float orbbec:minDepthMeters = 0.04
+                custom float orbbec:maxDepthMeters = 1
+                custom string orbbec:calibration = "640x480 color-aligned nominal ground truth"
+                custom float orbbec:depthScaleMeters = 0.001
+                custom float[] orbbec:distortion = [0, 0, 0, 0, 0]
+
+                float2 clippingRange = (0.04, 1)
+                float focalLength = 12.052985
+                float focusDistance = 0.4
+                float fStop = 0
+                float horizontalAperture = 20.955
+                float horizontalApertureOffset = 0
+                token projection = "perspective"
+                float verticalAperture = 16.259682
+                float verticalApertureOffset = 0
+
+                quatd xformOp:orient = (0, 1, 0, 0)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+            }
+        }
+    }
+
+    over "camera_right_color_optical_frame"
+    {
+        def Camera "RightColorCamera"
+        {
+            token visibility = "invisible"
+            custom string orbbec:frame = "camera_right_color_optical_frame"
+            custom string orbbec:model = "Gemini 305 nominal 640x480 right color"
+            custom int orbbec:width = 640
+            custom int orbbec:height = 480
+            custom int orbbec:fps = 30
+            custom int orbbec:maxFps = 60
+            custom float orbbec:fx = 368.1179
+            custom float orbbec:fy = 355.8146
+            custom float orbbec:cx = 320
+            custom float orbbec:cy = 240
+            custom float orbbec:horizontalFovDegrees = 82
+            custom float orbbec:verticalFovDegrees = 68
+            custom string orbbec:calibration = "datasheet 4:3 color FOV nominal; replace with device calibration for sim-to-real"
+            custom float[] orbbec:distortion = [0, 0, 0, 0, 0]
+
+            float2 clippingRange = (0.01, 10)
+            float focalLength = 12.052985
+            float focusDistance = 0.4
+            float fStop = 0
+            float horizontalAperture = 20.955
+            float horizontalApertureOffset = 0
+            token projection = "perspective"
+            float verticalAperture = 16.259682
+            float verticalApertureOffset = 0
+
+            quatd xformOp:orient = (0, 1, 0, 0)
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+        }
+    }
+}
